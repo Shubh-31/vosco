@@ -8,9 +8,12 @@ function App() {
   const [step, setStep] = useState("email"); 
   const [message, setMessage] = useState("");
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+
   const sendMail = async () => {
     try {
-      const response = await axios.post("http://localhost:4000/send-email", { email });
+      const response =await axios.post(`${API_BASE_URL}/send-email`, { email });
       setGeneratedToken(response.data.token);
       setStep("token");
       
@@ -22,7 +25,7 @@ function App() {
 
   const verifyToken = async () => {
     try {
-      const response = await axios.post("http://localhost:4000/auth/callback", { email, token });
+      const response = await axios.post(`${API_BASE_URL}/auth/callback`, { email, token });
       setMessage(response.data.message);
     } catch (error) {
       setMessage("Token you entered is incorrect. Please verify once.");
