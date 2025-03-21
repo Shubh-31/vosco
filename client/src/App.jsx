@@ -1,83 +1,60 @@
-import { useState } from "react";
-import axios from "axios";
+import { useAuth0 } from "@auth0/auth0-react";
+import React, { useState } from "react";
 
 function App() {
-  const [email, setEmail] = useState("");
-  const [token, setToken] = useState("");
-  const [generatedToken, setGeneratedToken] = useState(null);
-  const [step, setStep] = useState("email"); 
+  const { user, loginWithRedirect, getAccessTokenSilently } = useAuth0();
   const [message, setMessage] = useState("");
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const sendToken = async () => {
+    if (!user) return;
 
-
-  const sendMail = async () => {
     try {
-      const response =await axios.post(`${API_BASE_URL}/send-email`, { email });
-      setGeneratedToken(response.data.token);
-      setStep("token");
-      
+      const accessToken = await getAccessTokenSilently();
+      const response = await fetch("http://localhost:4000/auth/callback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: user.email, token: accessToken }),
+      });
+
+      const data = await response.json();
+      setMessage(data.message);
     } catch (error) {
-      console.error("Failure:", error.response?.data || error.message);
+      console.error("Error sending token:", error);
+      setMessage("Failed to send token.");
     }
   };
-  
-
-  const verifyToken = async () => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/auth/callback`, { email, token });
-      setMessage(response.data.message);
-    } catch (error) {
-      setMessage("Token you entered is incorrect. Please verify once.");
-    }
-  };
-  
-  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="bg-white p-6 rounded-lg shadow-md w-96">
-        {step === "email" ? (
-          <>
-            <h2 className="text-xl font-semibold mb-4">Enter Your Email</h2>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded mb-4"
-            />
-            <button
-              onClick={sendMail}
-              className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-            >
-              Send Authentication Token
-            </button>
-          </>
-        ) : (
-          <>
-            <h2 className="text-xl font-semibold mb-4">Enter Authentication Token</h2>
-            <input
-              type="text"
-              placeholder="Enter token"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              className="w-full p-2 border rounded mb-4"
-            />
-            <button
-              onClick={verifyToken}
-              className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"
-            >
-              Verify Token
-            </button>
-            {message && (
-              <p className={`mt-4 p-2 text-center rounded ${message.includes("incorrect") ? "bg-red-200 text-red-600" : "bg-green-200 text-green-600"}`}>
-                {message}
-              </p>
-            )}
-          </>
-        )}
-      </div>
+      {!user ? (
+        <div className="text-center bg-white p-6 rounded-xl shadow-lg">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            Please log in to continue
+          </h2>
+          <button
+            onClick={() => loginWithRedirect()}
+            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
+          >
+            Log in
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white p-6 rounded-xl shadow-lg text-center border border-gray-300">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+            Hi! Greetings {' '} {user.name}
+          </h2>
+          <p className="text-gray-500">Email: {' '}{user.email}</p>
+          <button
+            onClick={sendToken}
+            className="mt-4 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition cursor-pointer"
+          >
+            Send Token
+          </button>
+          {message && <p className="mt-2 text-gray-600">{message}</p>}
+        </div>
+      )}
     </div>
   );
 }
