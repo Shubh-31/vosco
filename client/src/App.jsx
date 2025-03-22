@@ -7,6 +7,7 @@ function App() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(null);
 
   const sendOtp = async () => {
     if (!user) return;
@@ -17,12 +18,15 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, token: accessToken }),
       });
+
       const data = await response.json();
       setMessage(data.message);
+      setIsSuccess(response.ok);
       if (response.ok) setOtpSent(true);
     } catch (error) {
       console.error("Error sending OTP:", error);
       setMessage("Failed to send OTP.");
+      setIsSuccess(false);
     }
   };
 
@@ -34,11 +38,14 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, otp }),
       });
+
       const data = await response.json();
       setMessage(data.message);
+      setIsSuccess(response.ok);
     } catch (error) {
       console.error("Error verifying OTP:", error);
       setMessage("Failed to verify OTP.");
+      setIsSuccess(false);
     }
   };
 
@@ -63,7 +70,10 @@ function App() {
             <h2 className="text-2xl font-bold text-black mb-2">
               Hello, {user.name} 👋
             </h2>
-            <p className="text-black mb-4 text-xs">OTP will be sent on {user.email}</p>
+            <p className="text-black mb-4 text-xs">
+              OTP will be sent to {user.email}
+            </p>
+
             {!otpSent ? (
               <button
                 onClick={sendOtp}
@@ -88,7 +98,20 @@ function App() {
                 </button>
               </div>
             )}
-            {message && <p className="mt-3 text-gray-100">{message}</p>}
+
+            {message && (
+              <div
+                className={`mt-4 px-4 py-2 rounded-lg text-center w-full transition-all duration-300
+                  ${
+                    isSuccess
+                      ? "bg-white-500 text-green-500"
+                      : "bg-white-500 text-red-500"
+                  }`}
+              >
+                {message}
+              </div>
+            )}
+
             <button
               onClick={() => logout({ returnTo: window.location.origin })}
               className="mt-4 px-2 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition shadow-md cursor-pointer"
