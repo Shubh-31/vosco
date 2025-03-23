@@ -1,148 +1,128 @@
-# Authentication System using Email & Token (with Auth0)
+# OTP Verification App
 
-This project is a simple authentication system where users can enter their email, receive a token via email, and verify it. The system uses **Node.js, Express, React, Nodemailer**, and **Auth0** for authentication.
+A secure authentication system that allows users to log in using Auth0 and verify their identity via OTP. The backend stores and validates OTPs, and the frontend provides a seamless user experience for authentication and verification.
 
-## Features
-- Send authentication tokens via email.
-- Verify authentication tokens.
-- Secure authentication using **Auth0**.
-
-## Tech Stack
-- **Frontend**: React, Next.js, TailwindCSS
-- **Backend**: Node.js, Express.js
-- **Email Service**: Nodemailer (Gmail SMTP)
-- **Auth Provider**: Auth0
+## 🚀 Features
+- User authentication via **Auth0**
+- OTP generation and verification
+- Backend API built with **Node.js and Express**
+- Frontend developed using **React.js and Tailwind CSS**
+- Secure API communication with **JWT tokens**
 
 ---
 
-## Setup Instructions
+## 🛠️ Installation & Setup
 
-### 1️⃣ Clone the Repository
+### **1. Clone the Repository**
 ```sh
-git clone https://github.com/Shubh-31/auth-email-verification.git
-cd auth-email-verification
+git clone https://github.com/Shubh-31/otp-verification-app.git
+cd otp-verification-app
 ```
 
-### 2️⃣ Backend Setup (Node.js + Express)
-#### **Install Dependencies**
+### **2. Install Dependencies**
+#### **Backend Setup**
 ```sh
-cd backend
+cd server
+npm install
+```
+#### **Frontend Setup**
+```sh
+cd client
 npm install
 ```
 
-#### **Configure Environment Variables**
-Create a `.env` file in the `backend` folder:
-```sh
+### **3. Configure Environment Variables**
+Create a `.env` file in both the backend and frontend directories.
+
+#### **Backend (`server/.env`)**
+```env
 PORT=4000
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-AUTH0_CLIENT_ID=your-auth0-client-id
-AUTH0_CLIENT_SECRET=your-auth0-client-secret
 AUTH0_DOMAIN=your-auth0-domain
-CORS_ORIGIN=https://vosco-shubh-31s-projects.vercel.app
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-client-secret
+CORS_ORIGIN=https://your-frontend.vercel.app
 ```
-**Note**: Generate an **App Password** for Gmail from [Google App Passwords](https://myaccount.google.com/apppasswords).
 
-#### **Start the Backend Server**
+#### **Frontend (`client/.env`)**
+```env
+VITE_AUTH0_DOMAIN=your-auth0-domain
+VITE_AUTH0_CLIENT_ID=your-client-id
+VITE_API_URL=https://your-backend.vercel.app
+```
+
+### **4. Run the Application**
+#### **Start the Backend**
 ```sh
-npm start
+cd server
+node app.js
 ```
-The backend will be running at `http://localhost:4000`.
-
----
-
-### 3️⃣ Frontend Setup (React + Next.js)
-#### **Install Dependencies**
-```sh
-cd frontend
-npm install
-```
-
-#### **Configure Environment Variables**
-Create a `.env.local` file in the `frontend` folder:
-```sh
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
-NEXT_PUBLIC_AUTH0_CLIENT_ID=your-auth0-client-id
-NEXT_PUBLIC_AUTH0_DOMAIN=your-auth0-domain
-NEXT_PUBLIC_AUTH0_AUDIENCE=your-auth0-audience
-```
-
 #### **Start the Frontend**
 ```sh
+cd client
 npm run dev
 ```
-The frontend will be running at `http://localhost:3000`.
 
 ---
 
-## 🔑 Auth0 Configuration
-### **1. Create an Auth0 Application**
-1. Go to [Auth0 Dashboard](https://auth0.com/).
-2. Create a new **Regular Web Application**.
-3. Navigate to **Settings** and copy the:
-   - **Client ID**
-   - **Client Secret**
-   - **Domain**
+## 🌍 Deployment
 
-### **2. Update Allowed URLs**
-In the Auth0 **Application Settings**:
-- **Allowed Callback URLs**:  
-  `http://localhost:3000/api/auth/callback`
-- **Allowed Logout URLs**:  
-  `http://localhost:3000`
-- **Allowed Web Origins**:  
-  `http://localhost:3000`
+### **Deploy Backend on Vercel**
+```sh
+cd server
+vercel --prod
+```
+Ensure that your API URL (`VITE_API_URL`) in the frontend `.env` file is updated with the Vercel backend URL.
 
-### **3. Enable API Authorization**
-1. Go to **APIs** → **Create API**.
-2. Name it (e.g., `EmailAuthAPI`).
-3. Set **Identifier** to `http://localhost:4000`.
-4. Enable `RS256` as the signing algorithm.
-
-Now, update `.env` with `AUTH0_AUDIENCE=http://localhost:4000`.
+### **Deploy Frontend on Vercel**
+```sh
+cd client
+vercel --prod
+```
 
 ---
 
-## 🚀 Deployment
-To deploy on **Vercel** and **Render**, follow these steps:
+## 🔥 API Endpoints
 
-### **Frontend Deployment (Vercel)**
-1. Install the Vercel CLI:
-   ```sh
-   npm install -g vercel
-   ```
-2. Deploy:
-   ```sh
-   vercel
-   ```
-3. Add environment variables in the Vercel dashboard.
+### **Send OTP**
+**POST** `/send-otp`
+```json
+{
+  "email": "user@example.com",
+  "token": "JWT_ACCESS_TOKEN"
+}
+```
 
-### **Backend Deployment (Render)**
-1. Push your backend code to GitHub.
-2. Go to [Render](https://render.com/), create a **new web service**.
-3. Connect it to your GitHub repo.
-4. Add environment variables in Render settings.
-5. Deploy!
+### **Verify OTP**
+**POST** `/verify-otp`
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
 
 ---
 
 ## 🛠️ Troubleshooting
-### **1. Not Receiving Emails?**
-- Ensure you're using an **App Password** for Gmail.
-- Check spam/junk folders.
-- Use a third-party email service like **SendGrid**.
 
-### **2. Token Not Verifying?**
-- Ensure the token is not expired.
-- Make sure `email` and `token` are correctly sent in the request.
+### **1. OTP Verification Fails (400 Bad Request)**
+- Ensure the frontend is sending the correct request payload.
+- Check CORS settings in `server/app.js`.
+- Debug with `console.log()` inside `/verify-otp`.
 
-### **3. CORS Issues?**
-- Update `CORS_ORIGIN` in `.env`.
-- Restart the backend server.
+### **2. API Not Working on Production**
+- Run `vercel logs --prod` to check for errors.
+- Make sure `.env` variables are correctly set in Vercel (`vercel env add`).
+- Confirm that the frontend is pointing to the correct backend URL.
 
 ---
 
-## 📌 Author
+## 📜 License
+This project is open-source and available under the **MIT License**.
+
+---
+
+## 💡 Author
 **Shubhang Mishra**  
 GitHub: [Shubh-31](https://github.com/Shubh-31)  
 Email: shubhangmishra999@gmail.com
