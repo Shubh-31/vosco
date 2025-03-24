@@ -2,28 +2,46 @@ const express = require("express");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
 const axios = require("axios");
+const dotenv = require("dotenv")
 require("dotenv").config();
 
+dotenv.config();
 const app = express();
-const port = 4000;
-
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://vosco-shubh-31s-projects.vercel.app",
-    ],
-    methods: "GET,POST",
-    credentials: true,
-  })
-);
-
-app.use(express.json({ limit: "25mb" }));
+const PORT = process.env.PORT || 5000;
 
 const tokens = new Map();
-const generateNumericToken = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+const corsOptions = {
+  origin: ["http://localhost:5173", "https://vosco-shubh-31s-projects.vercel.app"],
+  methods: "GET,POST,OPTIONS",
+  allowedHeaders: "Content-Type,Authorization",
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.use(express.json());
+
+app.options("*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.sendStatus(200);
+});
+
+const generateNumericToken = () => Math.floor(100000 + Math.random() * 900000);
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 app.post("/send-otp", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Credentials", "true");
+
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: "Email is required" });
 
@@ -31,23 +49,13 @@ app.post("/send-otp", async (req, res) => {
     const otp = generateNumericToken();
     tokens.set(email, otp);
 
-   
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const mailOptions = {
+    await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Your Authentication OTP",
       text: `Your OTP is: ${otp}. This OTP is valid for 5 minutes.`,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
     res.json({ message: "OTP sent successfully" });
   } catch (error) {
     console.error("Error sending email:", error);
@@ -55,21 +63,19 @@ app.post("/send-otp", async (req, res) => {
   }
 });
 
-
-
 app.post("/verify-otp", (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
 
-  if (tokens.get(email) === otp) {
+  const storedOtp = tokens.get(email);
+  if (!storedOtp) return res.status(400).json({ message: "OTP expired or not found" });
+
+  if (parseInt(otp, 10) === storedOtp) {
     tokens.delete(email);
-    return res.json({ message: "OTP verified successfully!" });
+    return res.json({ message: "OTP verified successfully" });
   }
 
   res.status(400).json({ message: "Invalid OTP" });
 });
 
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
