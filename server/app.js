@@ -9,11 +9,15 @@ const port = 4000;
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://vosco-shubh-31s-projects.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://vosco-shubh-31s-projects.vercel.app",
+    ],
     methods: "GET,POST",
     credentials: true,
   })
 );
+
 app.use(express.json({ limit: "25mb" }));
 
 const tokens = new Map();

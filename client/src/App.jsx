@@ -9,11 +9,16 @@ function App() {
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(null);
 
+  const API_BASE_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:4000"
+    : "https://railway.com/project/821c2167-db64-411a-8e19-211816a4da72/service/c3d7bff1-729b-4252-88ea-adaefbeb618f?environmentId=1b046840-8a6c-461b-a99c-abd878f6bdf0";
+
   const sendOtp = async () => {
     if (!user) return;
     try {
       const accessToken = await getAccessTokenSilently();
-      const response = await fetch("http://localhost:4000/send-otp", {
+      const response = await fetch(`${API_BASE_URL}/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, token: accessToken }),
